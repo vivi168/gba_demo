@@ -33,8 +33,3 @@ extern "C" fn AgbMain() -> ! {
 
   loop {}
 }
-
-#[no_mangle]
-static __IRQ_HANDLER: extern "C" fn() = irq_handler;
-
-extern "C" fn irq_handler() {}
