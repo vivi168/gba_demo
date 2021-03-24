@@ -26,6 +26,12 @@ fn clear_screen() {
 
 #[no_mangle]
 extern "C" fn AgbMain() -> ! {
+  unsafe {
+    (0x4000_208 as *mut u16).write_volatile(1);
+    (0x4000_200 as *mut u16).write_volatile(0x0001);
+    (0x4000_004 as *mut u16).write_volatile(0x0008);
+  }
+
   clear_screen();
 
   write_io(0x0403, 0);
@@ -35,12 +41,5 @@ extern "C" fn AgbMain() -> ! {
   loop {
     write_vram(i, 240 * 160 / 2 + 240 / 2);
     i ^= 0xffff;
-
-    unsafe { vblankWait(); }
   }
-}
-
-#[no_mangle]
-extern "C" {
-  fn vblankWait();
 }

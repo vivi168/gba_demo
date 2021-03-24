@@ -1,58 +1,44 @@
-.ARM
+CPU_WRAM        = 0x03000000
+CPU_WRAM_END    = CPU_WRAM + 0x8000
+INTR_VECTOR_BUF = CPU_WRAM_END - 0x4
+INTR_CHECK_BUF  = CPU_WRAM_END - 0x8
 
+REG_BASE = 0x04000000
+REG_IME = REG_BASE + 0x208
+REG_IE  = REG_BASE + 0x200
+REG_IF  = REG_BASE + 0x202
+
+REG_IME_OFFSET = 0x208
+REG_IE_OFFSET = 0x200
+REG_IF_OFFSET = 0x202
+
+V_BLANK_INTR_FLAG = 0x0001
+STAT_V_BLANK_IF_ENABLE = 0x0008
+
+.ARM
 _start:
-    b header_end
+    b start_vector
     .space 188
-header_end:
-    bl registerVblank
+start_vector:
+    ldr r1, =INTR_VECTOR_BUF
+    ldr r0, =intr_main
+    str r0, [r1]
 
     /* call AgbMain in thumb mode */
     ldr r0, =AgbMain
     bx r0
 
-.ARM
-interruptHandler:
-    /* only vblank interrupt is enabled */
-    /* so it's pretty straight forward */
-    /* acknowledge REG_IF (4000202) */
-    mov r1, #0x4000000
-    mov r2, #1
-    str r2, [r1, #0x202]
-
-    /* acknowledge REG_IFBIOS (4000202) */
-    /* to be able to use swi 5 */
-    str r2, [r1, #-8]
-
-    /* ldr r3, [r1, #-8] */
-    /* ldr r2, [r3] */
-    /* orr r2, #1 */
-    /* str r2, [r1, #-8] */
-
-    bx lr
+    b start_vector
 
 .ARM
-.global registerVblank
-registerVblank:
-    /* enable v-blank interrupt */
-    mov r1, #0x4000000
+intr_main:
+    mov r1, #V_BLANK_INTR_FLAG
 
-    /* REG_IME (4000208) = 0, disable all interrupts */
-    mov r2, #0
-    str r2, [r1, #0x208]
+    ldr r0, =REG_IF
+    strh r1, [r0]
 
-    /* REG_INTERRUPT (3007FFC) = interruptHandler */
-    ldr r2, =interruptHandler
-    str r2, [r1, #-4]
-
-    /* REG_DIPSTAT (4000004) |= 8 (4th bit -> enable vblank) */
-    ldr r2, [r1, #4]
-    orr r2, #8
-    str r2, [r1, #4]
-
-    /* REG_IE (4000200) |= 1 (1st bit -> enable vblank) */
-    ldr r2, [r1, #0x200]
-    orr r2, #1
-    str r2, [r1, #0x200]
+    ldr r0, =INTR_CHECK_BUF
+    str r1, [r0]
 
     bx lr
 
