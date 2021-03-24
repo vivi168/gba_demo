@@ -24,6 +24,10 @@ fn clear_screen() {
   }
 }
 
+extern "C" {
+  fn vblankWait();
+}
+
 #[no_mangle]
 extern "C" fn AgbMain() -> ! {
   unsafe {
@@ -39,7 +43,11 @@ extern "C" fn AgbMain() -> ! {
   let mut i:u16 = 0;
 
   loop {
+    unsafe {
+      vblankWait();
+    }
+
     write_vram(i, 240 * 160 / 2 + 240 / 2);
-    i ^= 0xffff;
+    i += 1;
   }
 }

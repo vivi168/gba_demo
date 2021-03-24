@@ -46,3 +46,4 @@ intr_main:
 .global vblankWait
 vblankWait:
     swi 5
+    bx lr
