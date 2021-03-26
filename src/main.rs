@@ -40,7 +40,7 @@ extern "C" {
 
 #[no_mangle]
 extern "C" fn VBlankInterrupt() {
-  dma::dma_clear(32, VRAM, 160*240);
+  dma::dma_clear(0x27e6, VRAM, 160*240);
 
   unsafe { (0x3007ff8 as *mut u16).write_volatile(1); }
 }
@@ -65,7 +65,7 @@ extern "C" fn AgbMain() {
     unsafe {
       vblankWait();
 
-      (VRAM as *mut u16).offset(240 * 160 / 2 + i).write_volatile(31);
+      (VRAM as *mut u16).offset(240 * 160 / 2 + i).write_volatile(0x5de8);
     }
 
     i += 1;

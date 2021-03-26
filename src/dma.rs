@@ -9,6 +9,7 @@ const DMA_TIMMING_IMM:u32 = 0x00000000;
 const DMA_SRC_INC:u32     = 0x00000000;
 const DMA_SRC_FIX:u32     = 0x01000000;
 const DMA_DEST_INC:u32    = 0x00000000;
+const DMA_DEST_FIX:u32    = 0x00400000;
 const DMA_32BIT_BUS:u32   = 0x04000000;
 
 pub fn dma_set(srcp: u32, destp: u32, len: u32) {
