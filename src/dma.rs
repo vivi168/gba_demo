@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 const REG_BASE:u32 = 0x4000_000;
 const REG_DMA3:u32 = REG_BASE + 0xd4;
 const REG_DMA3SAD:u32 = REG_BASE + 0xd4;

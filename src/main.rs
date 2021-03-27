@@ -8,8 +8,8 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
   loop {}
 }
 
-const pal: &[u8; 256] = include_bytes!("../palette.bin");
-const pal_ptr: *const u8 = pal.as_ptr();
+const PAL: &[u8; 256] = include_bytes!("../palette.bin");
+const PAL_PTR: *const u8 = PAL.as_ptr();
 
 const REG_BASE:u32 = 0x4000_000;
 const REG_DISPSTAT:u32 = REG_BASE + 0x4;
@@ -20,6 +20,7 @@ const VRAM:u32 = 0x6000_000;
 const PALETTE:u32 = 0x5000_000;
 const PALETTE_OAM:u32 = PALETTE + 0x200;
 
+#[allow(dead_code)]
 fn copy_16(data: &[u8], dest: u32) {
   let mut buffer: u16 = 0;
 
@@ -40,7 +41,7 @@ extern "C" {
 
 #[no_mangle]
 extern "C" fn VBlankInterrupt() {
-  dma::dma_clear(0x27e6, VRAM, 160*240);
+  dma::dma_clear(0xdeaddead, VRAM, 160*240);
 
   unsafe { (0x3007ff8 as *mut u16).write_volatile(1); }
 }
@@ -53,7 +54,7 @@ extern "C" fn AgbMain() {
     (REG_DISPSTAT as *mut u16).write_volatile(0x0008);
   }
 
-  dma::dma_set(pal_ptr as u32, PALETTE_OAM, (pal.len() / 4) as u32);
+  dma::dma_set(PAL_PTR as u32, PALETTE_OAM, (PAL.len() / 4) as u32);
 
   unsafe {
     (REG_BASE as *mut u16).write_volatile(3 | 0x400);
