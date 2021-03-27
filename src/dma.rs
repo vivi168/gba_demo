@@ -14,23 +14,23 @@ const DMA_DEST_FIX:u32    = 0x00400000;
 const DMA_32BIT_BUS:u32   = 0x04000000;
 
 pub fn dma_set(srcp: u32, destp: u32, len: u32) {
-  let count:u32 = DMA_ENABLE | DMA_TIMMING_IMM | DMA_SRC_INC | DMA_DEST_INC | DMA_32BIT_BUS | len;
+  let control:u32 = DMA_ENABLE | DMA_TIMMING_IMM | DMA_SRC_INC | DMA_DEST_INC | DMA_32BIT_BUS | len;
 
   unsafe {
     (REG_DMA3SAD as *mut u32).write_volatile(srcp);
     (REG_DMA3DAD as *mut u32).write_volatile(destp);
-    (REG_DMA3CNT as *mut u32).write_volatile(count);
+    (REG_DMA3CNT as *mut u32).write_volatile(control);
   }
 }
 
 pub fn dma_clear(data: u32, destp: u32, len: u32) {
   let data_ref = &data;
   let data_ptr = data_ref as *const u32;
-  let count:u32 = DMA_ENABLE | DMA_TIMMING_IMM | DMA_SRC_FIX | DMA_DEST_INC | DMA_32BIT_BUS | len;
+  let control:u32 = DMA_ENABLE | DMA_TIMMING_IMM | DMA_SRC_FIX | DMA_DEST_INC | DMA_32BIT_BUS | len;
 
   unsafe {
     (REG_DMA3SAD as *mut u32).write_volatile(data_ptr as u32);
     (REG_DMA3DAD as *mut u32).write_volatile(destp);
-    (REG_DMA3CNT as *mut u32).write_volatile(count);
+    (REG_DMA3CNT as *mut u32).write_volatile(control);
   }
 }
