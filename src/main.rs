@@ -41,7 +41,8 @@ extern "C" {
 
 #[no_mangle]
 extern "C" fn VBlankInterrupt() {
-  dma::dma_clear(0xdeaddead, VRAM, 160*240);
+  let data: u32 = 0xdeaddead;
+  dma::dma_clear(&data, VRAM, 160*240);
 
   unsafe { (0x3007ff8 as *mut u16).write_volatile(1); }
 }

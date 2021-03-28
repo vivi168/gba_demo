@@ -23,8 +23,8 @@ pub fn dma_set(srcp: u32, destp: u32, len: u32) {
   }
 }
 
-pub fn dma_clear(data: u32, destp: u32, len: u32) {
-  let data_ref = &data;
+#[inline(never)]
+pub fn dma_clear(data_ref: &u32, destp: u32, len: u32) {
   let data_ptr = data_ref as *const u32;
   let control:u32 = DMA_ENABLE | DMA_TIMMING_IMM | DMA_SRC_FIX | DMA_DEST_INC | DMA_32BIT_BUS | len;
 

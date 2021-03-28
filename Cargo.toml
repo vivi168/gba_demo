@@ -8,4 +8,4 @@ panic="abort"
 lto=true
 incremental=false
 codegen-units=1
-opt-level = 1
+opt-level = 3
