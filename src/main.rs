@@ -40,12 +40,20 @@ extern "C" {
 }
 
 #[no_mangle]
-extern "C" fn VBlankInterrupt() {
+static InterruptTable: [fn(); 2] = [VBlankInterrupt, DummyInterrupt];
+
+#[no_mangle]
+fn VBlankInterrupt() {
   let data: u32 = 0xdeaddead;
   dma::dma_clear(&data, VRAM, 160*240);
 
   unsafe { (0x3007ff8 as *mut u16).write_volatile(1); }
 }
+#[no_mangle]
+fn DummyInterrupt() {
+
+}
+
 
 #[no_mangle]
 extern "C" fn AgbMain() {
