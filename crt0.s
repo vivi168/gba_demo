@@ -27,10 +27,6 @@ start_vector:
     msr cpsr, r0
     ldr sp, sp_usr
 
-    ldr r1, =INTR_VECTOR_BUF
-    ldr r0, =intr_main
-    str r0, [r1]
-
     /* call AgbMain in thumb mode */
     ldr r0, =AgbMain
     bx r0
@@ -41,6 +37,7 @@ sp_usr: .word CPU_WRAM_END - 0x100
 sp_irq: .word CPU_WRAM_END - 0x60
 
 .ARM
+.global intr_main
 intr_main:
     mov r1, #V_BLANK_INTR_FLAG
 

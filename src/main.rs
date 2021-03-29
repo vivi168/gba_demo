@@ -35,9 +35,8 @@ fn copy_16(data: &[u8], dest: u32) {
   }
 }
 
-extern "C" {
-  fn vblankWait();
-}
+extern "C" { fn vblankWait(); }
+extern "C" { fn intr_main(); }
 
 #[no_mangle]
 static InterruptTable: [fn(); 2] = [VBlankInterrupt, DummyInterrupt];
@@ -50,14 +49,19 @@ fn VBlankInterrupt() {
   unsafe { (0x3007ff8 as *mut u16).write_volatile(1); }
 }
 #[no_mangle]
-fn DummyInterrupt() {
-
-}
-
+fn DummyInterrupt() { }
 
 #[no_mangle]
 extern "C" fn AgbMain() {
+  let IntrMainBuff: [u32; 0x200/4] = [0; 0x200/4];
+  let IntrMainBuff_ref = &IntrMainBuff;
+  let IntrMainBuff_ptr = IntrMainBuff_ref as *const u32;
+  let intr_main_ptr = intr_main as *const u32;
+
+  dma::dma_set(intr_main_ptr as u32, IntrMainBuff_ptr as u32, IntrMainBuff.len() as u32);
+
   unsafe {
+    (0x3007ffc as *mut u32).write_volatile(IntrMainBuff_ptr as u32);
     (REG_IME as *mut u16).write_volatile(1);
     (REG_IE as *mut u16).write_volatile(0x0001);
     (REG_DISPSTAT as *mut u16).write_volatile(0x0008);
