@@ -40,6 +40,9 @@ start_vector:
 sp_usr: .word CPU_WRAM_END - 0x100
 sp_irq: .word CPU_WRAM_END - 0x60
 
+IntrTable:
+    .word VBlankInterrupt
+
 .ARM
 intr_main:
     mov r1, #V_BLANK_INTR_FLAG
@@ -47,7 +50,8 @@ intr_main:
     ldr r0, =REG_IF
     strh r1, [r0]
 
-    ldr r0, =VBlankInterrupt
+    ldr r1, =IntrTable
+    ldr r0, [r1]
     bx r0
 
     bx lr
