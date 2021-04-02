@@ -23,23 +23,10 @@ const VRAM:u32 = 0x6000_000;
 const PALETTE:u32 = 0x5000_000;
 const PALETTE_OAM:u32 = PALETTE + 0x200;
 
-#[allow(dead_code)]
-fn copy_16(data: &[u8], dest: u32) {
-  let mut buffer: u16 = 0;
-
-  for (i, &item) in data.iter().enumerate() {
-    if i % 2 == 1 {
-      buffer |= (item as u16) << 8;
-      unsafe {
-        (dest as *mut u16).offset(((i-1) / 2) as isize).write_volatile(buffer);
-      }
-    }
-    buffer = item as u16;
-  }
+extern "C" {
+  fn VBlankWait();
+  fn InterruptMain();
 }
-
-extern "C" { fn VBlankWait(); }
-extern "C" { fn InterruptMain(); }
 
 #[no_mangle]
 static InterruptTable: [fn(); 2] = [VBlankInterrupt, DummyInterrupt];
@@ -58,6 +45,10 @@ fn DummyInterrupt() { }
 extern "C" fn AgbMain() {
   let clear: u32 = 0;
   dma::dma_clear(&clear, 0x02000000, 0x40000);
+
+  dma::cpu_fast_copy(PAL_PTR as u32, 0x02000080, 0x80);
+  dma::cpu_copy(PAL_PTR as u32, 0x020001c0, 0x40, 16);
+  dma::cpu_copy(PAL_PTR as u32, 0x02000400, 0x40, 32);
 
   let IntrMainBuff: [u32; 0x200/4] = [0; 0x200/4];
   let IntrMainBuff_ref = &IntrMainBuff;

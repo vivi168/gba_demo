@@ -55,3 +55,15 @@ InterruptMain:
 VBlankWait:
     swi 5
     bx lr
+
+.THUMB
+.global CpuSet
+CpuSet:
+    swi 0x0b
+    bx lr
+
+.THUMB
+.global CpuFastSet
+CpuFastSet:
+    swi 0x0c
+    bx lr
