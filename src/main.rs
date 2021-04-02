@@ -3,6 +3,9 @@
 
 mod dma;
 
+#[link_section = ".exram"]
+static mut ARRAYTEST: [u16; 10] = [0; 10];
+
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
   loop {}
@@ -53,6 +56,9 @@ fn DummyInterrupt() { }
 
 #[no_mangle]
 extern "C" fn AgbMain() {
+  let clear: u32 = 0;
+  dma::dma_clear(&clear, 0x02000000, 0x40000);
+
   let IntrMainBuff: [u32; 0x200/4] = [0; 0x200/4];
   let IntrMainBuff_ref = &IntrMainBuff;
   let IntrMainBuff_ptr = IntrMainBuff_ref as *const u32;
@@ -79,7 +85,13 @@ extern "C" fn AgbMain() {
     unsafe {
       vblankWait();
 
-      (VRAM as *mut u16).offset(240 * 160 / 2 + i).write_volatile(0x5de8);
+      (VRAM as *mut u16).offset(240 * 160 / 2 + i).write_volatile(ARRAYTEST[0]);
+      (VRAM as *mut u16).offset(240 * 160 / 2 + i + 1).write_volatile(ARRAYTEST[4]);
+      (VRAM as *mut u16).offset(240 * 160 / 2 + i + 2).write_volatile(ARRAYTEST[9]);
+
+      ARRAYTEST[0] += 0xdead;
+      ARRAYTEST[4] += 1;
+      ARRAYTEST[9] += 20;
     }
 
     i += 1;

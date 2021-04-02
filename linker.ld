@@ -11,15 +11,19 @@ SECTIONS {
         KEEP(target/crt0.o(.text))
         *(.text*)
         *(.rodata*)
-    } > rom = 0xff
+    } > rom
 
     .data : ALIGN(4) {
         *(.data*)
-    } > iwram AT > rom = 0xff
+    } > iwram AT > rom
 
     .bss : ALIGN(4) {
         *(.bss*);
-    } > iwram = 0xff
+    } > iwram
+
+    .exram : ALIGN(4) {
+        *(.exram*);
+    } > ewram AT > rom
 
     /DISCARD/ : { *(*) }
 }
