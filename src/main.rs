@@ -38,8 +38,8 @@ fn copy_16(data: &[u8], dest: u32) {
   }
 }
 
-extern "C" { fn vblankWait(); }
-extern "C" { fn intr_main(); }
+extern "C" { fn VBlankWait(); }
+extern "C" { fn InterruptMain(); }
 
 #[no_mangle]
 static InterruptTable: [fn(); 2] = [VBlankInterrupt, DummyInterrupt];
@@ -62,9 +62,9 @@ extern "C" fn AgbMain() {
   let IntrMainBuff: [u32; 0x200/4] = [0; 0x200/4];
   let IntrMainBuff_ref = &IntrMainBuff;
   let IntrMainBuff_ptr = IntrMainBuff_ref as *const u32;
-  let intr_main_ptr = intr_main as *const u32;
+  let InterruptMain_ptr = InterruptMain as *const u32;
 
-  dma::dma_set(intr_main_ptr as u32, IntrMainBuff_ptr as u32, IntrMainBuff.len() as u32);
+  dma::dma_copy(InterruptMain_ptr as u32, IntrMainBuff_ptr as u32, IntrMainBuff.len() as u32);
 
   unsafe {
     (0x3007ffc as *mut u32).write_volatile(IntrMainBuff_ptr as u32);
@@ -73,7 +73,7 @@ extern "C" fn AgbMain() {
     (REG_DISPSTAT as *mut u16).write_volatile(0x0008);
   }
 
-  dma::dma_set(PAL_PTR as u32, PALETTE_OAM, (PAL.len() / 4) as u32);
+  dma::dma_copy(PAL_PTR as u32, PALETTE_OAM, (PAL.len() / 4) as u32);
 
   unsafe {
     (REG_BASE as *mut u16).write_volatile(3 | 0x400);
@@ -83,7 +83,7 @@ extern "C" fn AgbMain() {
 
   loop {
     unsafe {
-      vblankWait();
+      VBlankWait();
 
       (VRAM as *mut u16).offset(240 * 160 / 2 + i).write_volatile(ARRAYTEST[0]);
       (VRAM as *mut u16).offset(240 * 160 / 2 + i + 1).write_volatile(ARRAYTEST[4]);

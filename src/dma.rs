@@ -13,7 +13,7 @@ const DMA_DEST_INC:u32    = 0x00000000;
 const DMA_DEST_FIX:u32    = 0x00400000;
 const DMA_32BIT_BUS:u32   = 0x04000000;
 
-pub fn dma_set(srcp: u32, destp: u32, len: u32) {
+pub fn dma_copy(srcp: u32, destp: u32, len: u32) {
   let control:u32 = DMA_ENABLE | DMA_TIMMING_IMM | DMA_SRC_INC | DMA_DEST_INC | DMA_32BIT_BUS | len;
 
   unsafe {

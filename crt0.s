@@ -37,8 +37,8 @@ sp_usr: .word CPU_WRAM_END - 0x100
 sp_irq: .word CPU_WRAM_END - 0x60
 
 .ARM
-.global intr_main
-intr_main:
+.global InterruptMain
+InterruptMain:
     mov r1, #V_BLANK_INTR_FLAG
 
     ldr r0, =REG_IF
@@ -51,7 +51,7 @@ intr_main:
     bx lr
 
 .THUMB
-.global vblankWait
-vblankWait:
+.global VBlankWait
+VBlankWait:
     swi 5
     bx lr
