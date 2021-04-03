@@ -1,9 +1,6 @@
 #![allow(dead_code)]
-const REG_BASE:u32 = 0x4000_000;
-const REG_DMA3:u32 = REG_BASE + 0xd4;
-const REG_DMA3SAD:u32 = REG_BASE + 0xd4;
-const REG_DMA3DAD:u32 = REG_BASE + 0xd8;
-const REG_DMA3CNT:u32 = REG_BASE + 0xdc;
+
+use memory;
 
 const DMA_ENABLE:u32      = 0x80000000;
 const DMA_TIMMING_IMM:u32 = 0x00000000;
@@ -18,9 +15,9 @@ pub fn dma_copy(srcp: u32, destp: u32, len: u32) {
   let control:u32 = DMA_ENABLE | DMA_TIMMING_IMM | DMA_SRC_INC | DMA_DEST_INC | DMA_32BIT_BUS | len;
 
   unsafe {
-    (REG_DMA3SAD as *mut u32).write_volatile(srcp);
-    (REG_DMA3DAD as *mut u32).write_volatile(destp);
-    (REG_DMA3CNT as *mut u32).write_volatile(control);
+    (memory::REG_DMA3SAD as *mut u32).write_volatile(srcp);
+    (memory::REG_DMA3DAD as *mut u32).write_volatile(destp);
+    (memory::REG_DMA3CNT as *mut u32).write_volatile(control);
   }
 }
 
@@ -30,9 +27,9 @@ pub fn dma_clear(data_ref: &u32, destp: u32, len: u32) {
   let control:u32 = DMA_ENABLE | DMA_TIMMING_IMM | DMA_SRC_FIX | DMA_DEST_INC | DMA_32BIT_BUS | len;
 
   unsafe {
-    (REG_DMA3SAD as *mut u32).write_volatile(data_ptr as u32);
-    (REG_DMA3DAD as *mut u32).write_volatile(destp);
-    (REG_DMA3CNT as *mut u32).write_volatile(control);
+    (memory::REG_DMA3SAD as *mut u32).write_volatile(data_ptr as u32);
+    (memory::REG_DMA3DAD as *mut u32).write_volatile(destp);
+    (memory::REG_DMA3CNT as *mut u32).write_volatile(control);
   }
 }
 
