@@ -28,8 +28,8 @@ const BG_SC_DATA_PTR: *const u8 = BG_SC_DATA.as_ptr();
 
 #[link_section = ".exram"]
 static mut bg_sc_shadow: [u8; 2048] = [0; 2048];
-#[link_section = ".exram"]
-static mut timer : u16 = 0;
+static mut frame_counter : u32 = 0;
+static mut timer : u32 = 0;
 
 extern "C" {
   fn VBlankWait();
@@ -44,7 +44,11 @@ fn VBlankInterrupt() {
   unsafe {
     dma::dma_copy((bg_sc_shadow.as_ptr() as *const u8) as u32, memory::VRAM, (BG_SC_DATA.len() / 4) as u32);
 
-    timer += 1;
+    frame_counter += 1;
+    if (frame_counter % 60 == 0) {
+      timer += 1;
+    }
+
     (memory::INTR_CHECK_BUF as *mut u16).write_volatile(1); //  = V_BLANK_INTR_FLAG
   }
 }
