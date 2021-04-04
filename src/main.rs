@@ -28,16 +28,18 @@ const BG_SC_DATA_PTR: *const u8 = BG_SC_DATA.as_ptr();
 
 #[link_section = ".exram"]
 static mut bg_sc_shadow: [u8; 2048] = [0; 2048];
+
 static mut frame_counter : u32 = 0;
 static mut timer : u32 = 0;
+static mut IntrMainBuff: [u32; 16] = [0; 16];
+
+#[no_mangle]
+static InterruptTable: [fn(); 2] = [VBlankInterrupt, DummyInterrupt];
 
 extern "C" {
   fn VBlankWait();
   fn InterruptMain();
 }
-
-#[no_mangle]
-static InterruptTable: [fn(); 2] = [VBlankInterrupt, DummyInterrupt];
 
 #[no_mangle]
 fn VBlankInterrupt() {
@@ -64,12 +66,14 @@ extern "C" fn AgbMain() {
   dma::dma_clear(&clear, memory::CPU_WRAM, memory::CPU_WRAM_SIZE - 0x200);
 
   // Init interrupt
-  let IntrMainBuff: [u32; 0x200/4] = [0; 0x200/4];
-  let IntrMainBuff_ref = &IntrMainBuff;
-  let IntrMainBuff_ptr = IntrMainBuff_ref as *const u32;
-  let InterruptMain_ptr = InterruptMain as *const u32;
+  let IntrMainBuff_ptr;
 
-  dma::dma_copy(InterruptMain_ptr as u32, IntrMainBuff_ptr as u32, IntrMainBuff.len() as u32);
+  unsafe {
+    IntrMainBuff_ptr = &IntrMainBuff as *const u32;
+    let InterruptMain_ptr = InterruptMain as *const u32;
+
+    dma::dma_copy(InterruptMain_ptr as u32, IntrMainBuff_ptr as u32, IntrMainBuff.len() as u32);
+  }
 
   // copy data
   dma::dma_copy(BG_PAL_PTR as u32, memory::PALETTE, (BG_PAL.len() / 4) as u32);
