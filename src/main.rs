@@ -30,8 +30,12 @@ const BG_SC_DATA_PTR: *const u8 = BG_SC_DATA.as_ptr();
 static mut bg_sc_shadow: [u8; 2048] = [0; 2048];
 
 static mut frame_counter : u32 = 0;
-static mut timer : u32 = 0;
-static mut IntrMainBuff: [u32; 16] = [0; 16];
+static mut timer         : u32 = 0;
+static mut key_press     : u16 = 0;
+static mut key_held      : u16 = 0;
+static mut bg_scroll_x   : i16 = 0;
+static mut bg_scroll_y   : i16 = 0;
+static mut IntrMainBuff  : [u32; 16] = [0; 16];
 
 #[no_mangle]
 static InterruptTable: [fn(); 2] = [VBlankInterrupt, DummyInterrupt];
@@ -51,12 +55,23 @@ fn VBlankInterrupt() {
       timer += 1;
     }
 
+    (memory::REG_BG0HOFS as *mut u16).write_volatile(bg_scroll_x as u16);
+    (memory::REG_BG0VOFS as *mut u16).write_volatile(bg_scroll_y as u16);
+
     (memory::INTR_CHECK_BUF as *mut u16).write_volatile(1); //  = V_BLANK_INTR_FLAG
   }
 }
 
 #[no_mangle]
 fn DummyInterrupt() { }
+
+fn key_read() {
+  unsafe {
+    let read_data: u16 = (memory::REG_KEYINPUT as *mut u16).read_volatile() ^ memory::ALL_KEY_MASK;
+    key_press = read_data & (read_data ^ key_held);
+    key_held = read_data;
+  }
+}
 
 #[no_mangle]
 extern "C" fn AgbMain() {
@@ -103,8 +118,18 @@ extern "C" fn AgbMain() {
     unsafe {
       VBlankWait();
 
+      key_read();
+
+      if key_held & memory::R_KEY != 0 {
+        bg_scroll_x += 1;
+      } else if key_held & memory::L_KEY != 0 {
+        bg_scroll_x -= 1;
+      } else if key_held & memory::U_KEY != 0 {
+        bg_scroll_y -= 1;
+      } else if key_held & memory::D_KEY != 0 {
+        bg_scroll_y += 1;
+      }
       // todo
-      // read input
       // move sprite
     }
   }
