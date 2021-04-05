@@ -111,23 +111,24 @@ impl Camera {
     let px = actor.x * CELL_SIZE;
     let py = actor.y * CELL_SIZE;
 
-    let prev_x = self.x;
-    let prev_y = self.y;
-
     self.x = px - (SCREEN_W / 2 - CELL_SIZE / 2);
     self.y = py - (SCREEN_H / 2 - CELL_SIZE);
 
     // keep camera in bound
-    if self.x < 0 || (self.x + SCREEN_W) > (MAP_W * CELL_SIZE) {
-      self.x = prev_x;
+    if self.x < 0 {
+      self.x = 0;
+    } else if (self.x + SCREEN_W) > (MAP_W * CELL_SIZE) {
+      self.x = (MAP_W * CELL_SIZE) - SCREEN_W;
     }
-    if self.y < 0 || (self.y + SCREEN_H) > (MAP_H * CELL_SIZE) {
-      self.y = prev_y;
+    if self.y < 0 {
+      self.y = 0;
+    } else if (self.y + SCREEN_H) > (MAP_H * CELL_SIZE) {
+      self.y = (MAP_H * CELL_SIZE) - SCREEN_H;
     }
 
     unsafe {
-      bg_scroll_x += (self.x - prev_x);
-      bg_scroll_y += (self.y - prev_y);
+      bg_scroll_x = self.x;
+      bg_scroll_y = self.y;
     }
   }
 }
@@ -140,7 +141,7 @@ struct Actor {
 
 fn update_oam(actor: &Actor, camera: &Camera, idx: usize) {
   let mut screen_x = actor.x * CELL_SIZE - camera.x;
-  let mut screen_y = actor.y * CELL_SIZE - camera.y;
+  let screen_y = actor.y * CELL_SIZE - camera.y;
 
   // keep sprite off screen
   if screen_x < 0 || screen_x > SCREEN_W - CELL_SIZE {
@@ -201,8 +202,8 @@ extern "C" fn AgbMain() {
   }
 
   let mut player = Actor {
-    x: 0,
-    y: 0,
+    x: 29,
+    y: 30,
     sprite: 0
   };
 
@@ -233,10 +234,10 @@ extern "C" fn AgbMain() {
         player.y += VEL;
       }
       // keep player in bound
-      if (player.x < 0 || player.x > MAP_W - 1) {
+      if player.x < 0 || player.x > MAP_W - 1 {
         player.x = prev_x;
       }
-      if (player.y < 0 || player.y > MAP_H - 1) {
+      if player.y < 0 || player.y > MAP_H - 1 {
         player.y = prev_y;
       }
 
