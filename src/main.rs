@@ -88,9 +88,7 @@ fn init_oam() {
 
     oam_shadow[0].set_x_coord(0);
     oam_shadow[0].set_y_coord(0);
-    oam_shadow[1].set_x_coord(8);
-    oam_shadow[1].set_y_coord(0);
-    oam_shadow[1].set_char_no(1);
+    oam_shadow[0].set_obj_size(1);
 
     dma::dma_copy((oam_shadow.as_ptr() as *const u8) as u32, memory::OAM, oam::OAM_SIZE);
   }
@@ -147,16 +145,18 @@ extern "C" fn AgbMain() {
       key_read();
 
       if key_held & memory::R_KEY != 0 {
-        bg_scroll_x += 1;
+        // bg_scroll_x += 1;
+        oam_shadow[0].set_x_coord(oam_shadow[0].get_x_coord() + 1);
       } else if key_held & memory::L_KEY != 0 {
-        bg_scroll_x -= 1;
+        oam_shadow[0].set_x_coord(oam_shadow[0].get_x_coord() - 1);
+        // bg_scroll_x -= 1;
       } else if key_held & memory::U_KEY != 0 {
-        bg_scroll_y -= 1;
+        oam_shadow[0].set_y_coord(oam_shadow[0].get_y_coord() - 1);
+        // bg_scroll_y -= 1;
       } else if key_held & memory::D_KEY != 0 {
-        bg_scroll_y += 1;
+        oam_shadow[0].set_y_coord(oam_shadow[0].get_y_coord() + 1);
+        // bg_scroll_y += 1;
       }
-      // todo
-      // move sprite
     }
   }
 }
