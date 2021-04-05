@@ -184,6 +184,13 @@ extern "C" fn AgbMain() {
   // init oam
   init_oam();
 
+  let mut player = Actor { x: 18, y: 25, sprite: 0 };
+  let mut knight = Actor { x: 2, y: 3, sprite: 2 };
+  let mut camera = Camera { x: 0, y: 0 };
+  camera.center_on(&player);
+  update_oam(&player, &camera, 0);
+  update_oam(&knight, &camera, 1);
+
   unsafe {
     dma::dma_copy(BG_SC_DATA_PTR as u32, (bg_sc_shadow.as_ptr() as *const u8) as u32, (BG_SC_DATA.len() / 4) as u32);
     dma::dma_copy((bg_sc_shadow.as_ptr() as *const u8) as u32, memory::VRAM, (BG_SC_DATA.len() / 4) as u32);
@@ -200,20 +207,6 @@ extern "C" fn AgbMain() {
     // turn screen on
     (memory::REG_DISPCNT as *mut u16).write_volatile(0x0000 | 0x1000 | 0x0100); // (DISP_MODE_0 | DISP_OBJ_ON | DISP_BG0_ON)
   }
-
-  let mut player = Actor {
-    x: 29,
-    y: 30,
-    sprite: 0
-  };
-
-  let mut knight = Actor {
-    x: 2,
-    y: 3,
-    sprite: 2
-  };
-
-  let mut camera = Camera { x: 0, y: 0 };
 
   // main loop
   loop {
