@@ -3,6 +3,7 @@
 
 mod memory;
 mod dma;
+mod oam;
 
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
@@ -28,6 +29,11 @@ const BG_SC_DATA_PTR: *const u8 = BG_SC_DATA.as_ptr();
 
 #[link_section = ".exram"]
 static mut bg_sc_shadow: [u8; 2048] = [0; 2048];
+#[link_section = ".exram"]
+static mut oam_shadow: [oam::OamData; 128] = [
+  oam::OamData::default();
+  128
+];
 
 static mut frame_counter : u32 = 0;
 static mut timer         : u32 = 0;
@@ -49,9 +55,10 @@ extern "C" {
 fn VBlankInterrupt() {
   unsafe {
     dma::dma_copy((bg_sc_shadow.as_ptr() as *const u8) as u32, memory::VRAM, (BG_SC_DATA.len() / 4) as u32);
+    dma::dma_copy((oam_shadow.as_ptr() as *const u8) as u32, memory::OAM, oam::OAM_SIZE);
 
     frame_counter += 1;
-    if (frame_counter % 60 == 0) {
+    if frame_counter % 60 == 0 {
       timer += 1;
     }
 
@@ -70,6 +77,22 @@ fn key_read() {
     let read_data: u16 = (memory::REG_KEYINPUT as *mut u16).read_volatile() ^ memory::ALL_KEY_MASK;
     key_press = read_data & (read_data ^ key_held);
     key_held = read_data;
+  }
+}
+
+fn init_oam() {
+  unsafe {
+    for obj in oam_shadow.iter_mut() {
+      obj.set_x_coord(256);
+    }
+
+    oam_shadow[0].set_x_coord(0);
+    oam_shadow[0].set_y_coord(0);
+    oam_shadow[1].set_x_coord(8);
+    oam_shadow[1].set_y_coord(0);
+    oam_shadow[1].set_char_no(1);
+
+    dma::dma_copy((oam_shadow.as_ptr() as *const u8) as u32, memory::OAM, oam::OAM_SIZE);
   }
 }
 
@@ -95,6 +118,9 @@ extern "C" fn AgbMain() {
   dma::dma_copy(OBJ_PAL_PTR as u32, memory::PALETTE_OAM, (OBJ_PAL.len() / 4) as u32);
   dma::dma_copy(BG_TILES_PTR as u32, memory::VRAM + 0x8000, (BG_TILES.len() / 4) as u32);
   dma::dma_copy(OBJ_TILES_PTR as u32, memory::VRAM + 0x10000, (OBJ_TILES.len() / 4) as u32);
+
+  // init oam
+  init_oam();
 
   unsafe {
     dma::dma_copy(BG_SC_DATA_PTR as u32, (bg_sc_shadow.as_ptr() as *const u8) as u32, (BG_SC_DATA.len() / 4) as u32);
