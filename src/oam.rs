@@ -2,7 +2,7 @@
 
 use memory;
 
-pub const OAM_SIZE: u32 = 128 * 2;
+pub const OAM_SIZE: u32 = 128 * 2; // a single OamData is 2 * u32 long
 
 #[derive(Copy, Clone)]
 pub struct OamData {

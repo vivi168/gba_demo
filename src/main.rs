@@ -30,10 +30,7 @@ const BG_SC_DATA_PTR: *const u8 = BG_SC_DATA.as_ptr();
 #[link_section = ".exram"]
 static mut bg_sc_shadow: [u8; 2048] = [0; 2048];
 #[link_section = ".exram"]
-static mut oam_shadow: [oam::OamData; 128] = [
-  oam::OamData::default();
-  128
-];
+static mut oam_shadow: [oam::OamData; 128] = [oam::OamData::default(); 128];
 
 static mut frame_counter : u32 = 0;
 static mut timer         : u32 = 0;
