@@ -83,6 +83,7 @@ fn init_oam() {
   unsafe {
     for obj in oam_shadow.iter_mut() {
       obj.set_x_coord(256);
+      obj.set_obj_size(1);
     }
 
     oam_shadow[0].set_x_coord(0);
@@ -90,6 +91,69 @@ fn init_oam() {
     oam_shadow[0].set_obj_size(1);
 
     dma::dma_copy((oam_shadow.as_ptr() as *const u8) as u32, memory::OAM, (size_of::<oam::OamData>() * oam::OAM_SIZE / 4) as u32);
+  }
+}
+
+const VEL: i16 = 1;
+const MAP_W: i16 = 32;
+const MAP_H: i16 = 32;
+const SCREEN_W: i16 = 240;
+const SCREEN_H: i16 = 160;
+const CELL_SIZE: i16 = 16;
+
+struct Camera {
+  x: i16,
+  y: i16
+}
+
+impl Camera {
+  fn center_on(&mut self, actor: &Actor) {
+    let px = actor.x * CELL_SIZE;
+    let py = actor.y * CELL_SIZE;
+
+    let prev_x = self.x;
+    let prev_y = self.y;
+
+    self.x = px - (SCREEN_W / 2 - CELL_SIZE / 2);
+    self.y = py - (SCREEN_H / 2 - CELL_SIZE);
+
+    // keep camera in bound
+    if self.x < 0 || (self.x + SCREEN_W) > (MAP_W * CELL_SIZE) {
+      self.x = prev_x;
+    }
+    if self.y < 0 || (self.y + SCREEN_H) > (MAP_H * CELL_SIZE) {
+      self.y = prev_y;
+    }
+
+    unsafe {
+      bg_scroll_x += (self.x - prev_x);
+      bg_scroll_y += (self.y - prev_y);
+    }
+  }
+}
+
+struct Actor {
+  x: i16,
+  y: i16,
+  sprite: u16
+}
+
+fn update_oam(actor: &Actor, camera: &Camera, idx: usize) {
+  let mut screen_x = actor.x * CELL_SIZE - camera.x;
+  let mut screen_y = actor.y * CELL_SIZE - camera.y;
+
+  // keep sprite off screen
+  if screen_x < 0 || screen_x > SCREEN_W - CELL_SIZE {
+    screen_x = 256;
+  }
+  if screen_y < 0 || screen_y > SCREEN_H - CELL_SIZE {
+    screen_x = 256;
+  }
+
+  unsafe {
+    oam_shadow[idx].set_x_coord(screen_x as u16);
+    oam_shadow[idx].set_y_coord(screen_y as u16);
+    oam_shadow[idx].set_char_no(actor.sprite);
   }
 }
 
@@ -136,6 +200,20 @@ extern "C" fn AgbMain() {
     (memory::REG_DISPCNT as *mut u16).write_volatile(0x0000 | 0x1000 | 0x0100); // (DISP_MODE_0 | DISP_OBJ_ON | DISP_BG0_ON)
   }
 
+  let mut player = Actor {
+    x: 0,
+    y: 0,
+    sprite: 0
+  };
+
+  let mut knight = Actor {
+    x: 2,
+    y: 3,
+    sprite: 2
+  };
+
+  let mut camera = Camera { x: 0, y: 0 };
+
   // main loop
   loop {
     unsafe {
@@ -143,19 +221,35 @@ extern "C" fn AgbMain() {
 
       key_read();
 
-      if key_held & memory::R_KEY != 0 {
-        // bg_scroll_x += 1;
-        oam_shadow[0].set_x_coord(oam_shadow[0].get_x_coord() + 1);
-      } else if key_held & memory::L_KEY != 0 {
-        oam_shadow[0].set_x_coord(oam_shadow[0].get_x_coord() - 1);
-        // bg_scroll_x -= 1;
-      } else if key_held & memory::U_KEY != 0 {
-        oam_shadow[0].set_y_coord(oam_shadow[0].get_y_coord() - 1);
-        // bg_scroll_y -= 1;
-      } else if key_held & memory::D_KEY != 0 {
-        oam_shadow[0].set_y_coord(oam_shadow[0].get_y_coord() + 1);
-        // bg_scroll_y += 1;
+      let prev_x = player.x;
+      let prev_y = player.y;
+      if key_press & memory::R_KEY != 0 {
+        player.x += VEL;
+      } else if key_press & memory::L_KEY != 0 {
+        player.x -= VEL;
+      } else if key_press & memory::U_KEY != 0 {
+        player.y -= VEL;
+      } else if key_press & memory::D_KEY != 0 {
+        player.y += VEL;
       }
+      // keep player in bound
+      if (player.x < 0 || player.x > MAP_W - 1) {
+        player.x = prev_x;
+      }
+      if (player.y < 0 || player.y > MAP_H - 1) {
+        player.y = prev_y;
+      }
+
+      camera.center_on(&player);
+
+      // update actors animation every other frame
+      if frame_counter % 30 == 0 {
+        player.sprite ^= 16;
+        knight.sprite ^= 16;
+      }
+
+      update_oam(&player, &camera, 0);
+      update_oam(&knight, &camera, 1);
     }
   }
 }
