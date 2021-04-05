@@ -38,8 +38,8 @@ static mut frame_counter : u32 = 0;
 static mut timer         : u32 = 0;
 static mut key_press     : u16 = 0;
 static mut key_held      : u16 = 0;
-static mut bg_scroll_x   : i16 = 0;
-static mut bg_scroll_y   : i16 = 0;
+static mut bg_scroll_x   : u8 = 0;
+static mut bg_scroll_y   : u8 = 0;
 static mut IntrMainBuff  : [u32; 16] = [0; 16];
 
 #[no_mangle]
@@ -127,8 +127,8 @@ impl Camera {
     }
 
     unsafe {
-      bg_scroll_x = self.x;
-      bg_scroll_y = self.y;
+      bg_scroll_x = self.x as u8;
+      bg_scroll_y = self.y as u8;
     }
   }
 }
