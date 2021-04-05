@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 
+use core::mem::size_of;
+
 mod memory;
 mod dma;
 mod oam;
@@ -30,7 +32,7 @@ const BG_SC_DATA_PTR: *const u8 = BG_SC_DATA.as_ptr();
 #[link_section = ".exram"]
 static mut bg_sc_shadow: [u8; 2048] = [0; 2048];
 #[link_section = ".exram"]
-static mut oam_shadow: [oam::OamData; 128] = [oam::OamData::default(); 128];
+static mut oam_shadow: [oam::OamData; oam::OAM_SIZE] = [oam::OamData::default(); oam::OAM_SIZE];
 
 static mut frame_counter : u32 = 0;
 static mut timer         : u32 = 0;
@@ -52,7 +54,7 @@ extern "C" {
 fn VBlankInterrupt() {
   unsafe {
     dma::dma_copy((bg_sc_shadow.as_ptr() as *const u8) as u32, memory::VRAM, (BG_SC_DATA.len() / 4) as u32);
-    dma::dma_copy((oam_shadow.as_ptr() as *const u8) as u32, memory::OAM, oam::OAM_SIZE);
+    dma::dma_copy((oam_shadow.as_ptr() as *const u8) as u32, memory::OAM, (size_of::<oam::OamData>() * oam::OAM_SIZE / 4) as u32);
 
     frame_counter += 1;
     if frame_counter % 60 == 0 {
@@ -87,7 +89,7 @@ fn init_oam() {
     oam_shadow[0].set_y_coord(0);
     oam_shadow[0].set_obj_size(1);
 
-    dma::dma_copy((oam_shadow.as_ptr() as *const u8) as u32, memory::OAM, oam::OAM_SIZE);
+    dma::dma_copy((oam_shadow.as_ptr() as *const u8) as u32, memory::OAM, (size_of::<oam::OamData>() * oam::OAM_SIZE / 4) as u32);
   }
 }
 
