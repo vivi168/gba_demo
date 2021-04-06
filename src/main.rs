@@ -4,6 +4,7 @@
 use core::mem::size_of;
 
 mod memory;
+mod define;
 mod dma;
 mod oam;
 
@@ -73,7 +74,7 @@ fn DummyInterrupt() { }
 
 fn key_read() {
   unsafe {
-    let read_data: u16 = (memory::REG_KEYINPUT as *mut u16).read_volatile() ^ memory::ALL_KEY_MASK;
+    let read_data: u16 = (memory::REG_KEYINPUT as *mut u16).read_volatile() ^ define::ALL_KEY_MASK;
     key_press = read_data & (read_data ^ key_held);
     key_held = read_data;
   }
@@ -178,8 +179,8 @@ extern "C" fn AgbMain() {
   // copy data
   dma::dma_copy(BG_PAL_PTR as u32, memory::PALETTE, (BG_PAL.len() / 4) as u32);
   dma::dma_copy(OBJ_PAL_PTR as u32, memory::PALETTE_OAM, (OBJ_PAL.len() / 4) as u32);
-  dma::dma_copy(BG_TILES_PTR as u32, memory::VRAM + 0x8000, (BG_TILES.len() / 4) as u32);
-  dma::dma_copy(OBJ_TILES_PTR as u32, memory::VRAM + 0x10000, (OBJ_TILES.len() / 4) as u32);
+  dma::dma_copy(BG_TILES_PTR as u32, memory::BG_CH_BLOCK_1, (BG_TILES.len() / 4) as u32);
+  dma::dma_copy(OBJ_TILES_PTR as u32, memory::OBJ_MODE0_VRAM, (OBJ_TILES.len() / 4) as u32);
 
   // init oam
   init_oam();
@@ -198,14 +199,14 @@ extern "C" fn AgbMain() {
     // set registers
     (memory::INTR_VECTOR_BUF as *mut u32).write_volatile(IntrMainBuff_ptr as u32);
     (memory::REG_IME as *mut u16).write_volatile(1);
-    (memory::REG_IE as *mut u16).write_volatile(0x0001); // = V_BLANK_INTR_FLAG
-    (memory::REG_DISPSTAT as *mut u16).write_volatile(0x0008); // = STAT_V_BLANK_IF_ENABLE
+    (memory::REG_IE as *mut u16).write_volatile(define::V_BLANK_INTR_FLAG);
+    (memory::REG_DISPSTAT as *mut u16).write_volatile(define::STAT_V_BLANK_IF_ENABLE);
 
-    // (BG_COLOR_16 | BG_SCREEN_SIZE_0 | BG_PRIORITY_0 | 0 << BG_SCREEN_BASE_SHIFT | 2 << BG_CHAR_BASE_SHIFT)
-    (memory::REG_BG0CNT as *mut u16).write_volatile(0x0000 | 0x0000 | 0x0000 | 0 << 8 | 2 << 2); //
+    (memory::REG_BG0CNT as *mut u16).write_volatile(define::BG_COLOR_16 | define::BG_SCREEN_SIZE_0 | define::BG_PRIORITY_0 |
+                                                    0 << define::BG_SCREEN_BASE_SHIFT | 1 << define::BG_CHAR_BASE_SHIFT);
 
     // turn screen on
-    (memory::REG_DISPCNT as *mut u16).write_volatile(0x0000 | 0x1000 | 0x0100); // (DISP_MODE_0 | DISP_OBJ_ON | DISP_BG0_ON)
+    (memory::REG_DISPCNT as *mut u16).write_volatile(define::DISP_MODE_0 | define::DISP_OBJ_ON | define::DISP_BG0_ON);
   }
 
   // main loop
@@ -217,13 +218,13 @@ extern "C" fn AgbMain() {
 
       let prev_x = player.x;
       let prev_y = player.y;
-      if key_press & memory::R_KEY != 0 {
+      if key_press & define::R_KEY != 0 {
         player.x += VEL;
-      } else if key_press & memory::L_KEY != 0 {
+      } else if key_press & define::L_KEY != 0 {
         player.x -= VEL;
-      } else if key_press & memory::U_KEY != 0 {
+      } else if key_press & define::U_KEY != 0 {
         player.y -= VEL;
-      } else if key_press & memory::D_KEY != 0 {
+      } else if key_press & define::D_KEY != 0 {
         player.y += VEL;
       }
       // keep player in bound
