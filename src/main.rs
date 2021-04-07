@@ -3,6 +3,7 @@
 
 use core::mem::size_of;
 
+mod assets;
 mod memory;
 mod define;
 mod dma;
@@ -12,23 +13,6 @@ mod oam;
 fn panic(_info: &core::panic::PanicInfo) -> ! {
   loop {}
 }
-
-// Constants
-
-const BG_PAL: &[u8; 32] = include_bytes!("../assets/bg.pal");
-const BG_PAL_PTR: *const u8 = BG_PAL.as_ptr();
-
-const OBJ_PAL: &[u8; 64] = include_bytes!("../assets/char.pal");
-const OBJ_PAL_PTR: *const u8 = OBJ_PAL.as_ptr();
-
-const BG_TILES: &[u8; 736] = include_bytes!("../assets/bg.tiles");
-const BG_TILES_PTR: *const u8 = BG_TILES.as_ptr();
-
-const OBJ_TILES: &[u8; 2048] = include_bytes!("../assets/char.tiles");
-const OBJ_TILES_PTR: *const u8 = OBJ_TILES.as_ptr();
-
-const BG_SC_DATA: &[u8; 2048] = include_bytes!("../assets/bg.map");
-const BG_SC_DATA_PTR: *const u8 = BG_SC_DATA.as_ptr();
 
 #[link_section = ".exram"]
 static mut bg_sc_shadow: [u8; 2048] = [0; 2048];
@@ -54,7 +38,7 @@ extern "C" {
 #[no_mangle]
 fn VBlankInterrupt() {
   unsafe {
-    dma::dma_copy((bg_sc_shadow.as_ptr() as *const u8) as u32, memory::VRAM, (BG_SC_DATA.len() / 4) as u32);
+    dma::dma_copy((bg_sc_shadow.as_ptr() as *const u8) as u32, memory::VRAM, (assets::BG_SC_DATA.len() / 4) as u32);
     dma::dma_copy((oam_shadow.as_ptr() as *const u8) as u32, memory::OAM, (size_of::<oam::OamData>() * oam::OAM_SIZE / 4) as u32);
 
     frame_counter += 1;
@@ -177,10 +161,10 @@ extern "C" fn AgbMain() {
   }
 
   // copy data
-  dma::dma_copy(BG_PAL_PTR as u32, memory::PALETTE, (BG_PAL.len() / 4) as u32);
-  dma::dma_copy(OBJ_PAL_PTR as u32, memory::PALETTE_OAM, (OBJ_PAL.len() / 4) as u32);
-  dma::dma_copy(BG_TILES_PTR as u32, memory::BG_CH_BLOCK_1, (BG_TILES.len() / 4) as u32);
-  dma::dma_copy(OBJ_TILES_PTR as u32, memory::OBJ_MODE0_VRAM, (OBJ_TILES.len() / 4) as u32);
+  dma::dma_copy(assets::BG_PAL_PTR as u32, memory::PALETTE, (assets::BG_PAL.len() / 4) as u32);
+  dma::dma_copy(assets::OBJ_PAL_PTR as u32, memory::PALETTE_OAM, (assets::OBJ_PAL.len() / 4) as u32);
+  dma::dma_copy(assets::BG_TILES_PTR as u32, memory::BG_CH_BLOCK_1, (assets::BG_TILES.len() / 4) as u32);
+  dma::dma_copy(assets::OBJ_TILES_PTR as u32, memory::OBJ_MODE0_VRAM, (assets::OBJ_TILES.len() / 4) as u32);
 
   // init oam
   init_oam();
@@ -193,8 +177,8 @@ extern "C" fn AgbMain() {
   update_oam(&knight, &camera, 1);
 
   unsafe {
-    dma::dma_copy(BG_SC_DATA_PTR as u32, (bg_sc_shadow.as_ptr() as *const u8) as u32, (BG_SC_DATA.len() / 4) as u32);
-    dma::dma_copy((bg_sc_shadow.as_ptr() as *const u8) as u32, memory::VRAM, (BG_SC_DATA.len() / 4) as u32);
+    dma::dma_copy(assets::BG_SC_DATA_PTR as u32, (bg_sc_shadow.as_ptr() as *const u8) as u32, (assets::BG_SC_DATA.len() / 4) as u32);
+    dma::dma_copy((bg_sc_shadow.as_ptr() as *const u8) as u32, memory::VRAM, (assets::BG_SC_DATA.len() / 4) as u32);
 
     // set registers
     (memory::INTR_VECTOR_BUF as *mut u32).write_volatile(IntrMainBuff_ptr as u32);
