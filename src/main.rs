@@ -6,6 +6,7 @@ use core::mem::size_of;
 mod assets;
 mod memory;
 mod define;
+mod input;
 mod dma;
 mod oam;
 
@@ -21,8 +22,6 @@ static mut oam_shadow: [oam::OamData; oam::OAM_SIZE] = [oam::OamData::default();
 
 static mut frame_counter : u32 = 0;
 static mut timer         : u32 = 0;
-static mut key_press     : u16 = 0;
-static mut key_held      : u16 = 0;
 static mut bg_scroll_x   : u8 = 0;
 static mut bg_scroll_y   : u8 = 0;
 static mut IntrMainBuff  : [u32; 16] = [0; 16];
@@ -56,13 +55,6 @@ fn VBlankInterrupt() {
 #[no_mangle]
 fn DummyInterrupt() { }
 
-fn key_read() {
-  unsafe {
-    let read_data: u16 = (memory::REG_KEYINPUT as *mut u16).read_volatile() ^ define::ALL_KEY_MASK;
-    key_press = read_data & (read_data ^ key_held);
-    key_held = read_data;
-  }
-}
 
 fn init_oam() {
   unsafe {
@@ -193,24 +185,28 @@ extern "C" fn AgbMain() {
     (memory::REG_DISPCNT as *mut u16).write_volatile(define::DISP_MODE_0 | define::DISP_OBJ_ON | define::DISP_BG0_ON);
   }
 
+  let mut joypad = input::JoyPad { key_held: 0, key_press: 0 };
+
   // main loop
   loop {
     unsafe {
       VBlankWait();
 
-      key_read();
+      joypad.read();
 
       let prev_x = player.x;
       let prev_y = player.y;
-      if key_press & define::R_KEY != 0 {
+
+      if joypad.is_pressed(input::R_KEY) {
         player.x += VEL;
-      } else if key_press & define::L_KEY != 0 {
+      } else if joypad.is_pressed(input::L_KEY) {
         player.x -= VEL;
-      } else if key_press & define::U_KEY != 0 {
+      } else if joypad.is_pressed(input::U_KEY) {
         player.y -= VEL;
-      } else if key_press & define::D_KEY != 0 {
+      } else if joypad.is_pressed(input::D_KEY) {
         player.y += VEL;
       }
+
       // keep player in bound
       if player.x < 0 || player.x > MAP_W - 1 {
         player.x = prev_x;
