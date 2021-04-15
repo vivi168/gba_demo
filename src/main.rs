@@ -9,6 +9,7 @@ mod define;
 mod input;
 mod dma;
 mod oam;
+mod random;
 
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
@@ -161,6 +162,7 @@ extern "C" fn AgbMain() {
   // init oam
   init_oam();
 
+  let mut rng = random::Random::default();
   let mut player = Actor { x: 18, y: 25, sprite: 0 };
   let mut knight = Actor { x: 2, y: 3, sprite: 2 };
   let mut camera = Camera { x: 0, y: 0 };
