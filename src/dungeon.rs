@@ -1,6 +1,6 @@
 use random;
 
-const MAP_WIDTH   : u16 = 96;
+const MAP_WIDTH   : u16 = 48;
 const MAP_HEIGHT  : u16 = 48;
 const ZONE_WIDTH  : u16 = MAP_WIDTH / 3;
 const ZONE_HEIGHT : u16 = MAP_HEIGHT / 3;
@@ -133,7 +133,7 @@ impl Dungeon {
           break;
         }
 
-        if self.corridors[target as usize] != 0 { break }
+        if self.corridors[target as usize] != (i as i8) { break }
       }
     }
   }
@@ -153,14 +153,75 @@ impl Dungeon {
   }
 
   fn dig_corridors(&mut self) {
+    let corridors = self.corridors;
+    for (a, &b) in corridors.iter().enumerate() {
+      if b == -1 { continue }
 
+      let org : usize;
+      let dest : usize;
+
+      if a < (b as usize) {
+        org = a;
+        dest = b as usize;
+      } else {
+        org = b as usize;
+        dest = a;
+      }
+
+      let room_org = self.rooms[org];
+      let room_dest = self.rooms[dest];
+
+      if same_col(org as u8, dest as u8) {
+        let ox = (room_org.x1 + room_org.x2) / 2;
+        let oy = room_org.y2;
+
+        let dx = (room_dest.x1 + room_dest.x2) / 2;
+        let dy = room_dest.y1;
+
+        let py = (oy + dy) / 2;
+
+        self.dig_vert_line(ox, oy, py);
+        if ox < dx { self.dig_hor_line(ox, py, dx) }
+        else { self.dig_hor_line(dx, py, ox+1) }
+        self.dig_vert_line(dx, py, dy);
+      } else {
+        let ox = room_org.x2;
+        let oy = (room_org.y1 + room_org.y2) / 2;
+
+        let dx = room_dest.x1;
+        let dy = (room_dest.y1 + room_dest.y2) / 2;
+
+        let px = (ox + dx) / 2;
+
+        self.dig_hor_line(ox, oy, px);
+        if oy < dy { self.dig_vert_line(px, oy, dy) }
+        else { self.dig_vert_line(px, dy, oy+1) }
+        self.dig_hor_line(px, dy, dx);
+      }
+    }
   }
 
-  fn dig_vert_line(&mut self) {
-
+  fn dig_vert_line(&mut self, ox : u16, oy : u16, dy : u16) {
+    for y in 0..(dy - oy) {
+      let map_y = y + oy;
+      let idx = ox + MAP_WIDTH * map_y;
+      self.tile_map[idx as usize] = Tile::Corridor;
+    }
   }
 
-  fn dig_hor_line(&mut self) {
-
+  fn dig_hor_line(&mut self, ox : u16, oy : u16, dx : u16) {
+    for x in 0..(dx - ox) {
+      let map_x = x + ox;
+      let idx = map_x + MAP_WIDTH * oy;
+      self.tile_map[idx as usize] = Tile::Corridor;
+    }
   }
+}
+
+fn same_col(a: u8, b : u8) -> bool {
+  return col(a) == col(b);
+}
+
+fn col(a : u8) -> u8 {
+  return a % 3;
 }
