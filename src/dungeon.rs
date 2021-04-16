@@ -7,14 +7,21 @@ const ZONE_HEIGHT : u16 = MAP_HEIGHT / 3;
 
 const X_OFFSET   : u16 = 3;
 const Y_OFFSET   : u16 = 3;
-const MIN_WIDTH  : u16 = 4;
-const MIN_HEIGHT : u16 = 3;
+const MIN_WIDTH  : u16 = 5;
+const MIN_HEIGHT : u16 = 4;
 
 #[derive(Copy, Clone)]
 enum Tile {
   Empty,
-  RoomFloor,
-  Corridor
+  HorWall,
+  VertWall,
+  TopLeWall,
+  TopRiWall,
+  BotLeWall,
+  BotRiWall,
+  FloorTile,
+  CorridorTile,
+  StairCase
 }
 
 #[derive(Copy, Clone)]
@@ -146,7 +153,21 @@ impl Dungeon {
           let map_y = y + room.y1;
           let idx = map_x + MAP_WIDTH * map_y;
 
-          self.tile_map[idx as usize] = Tile::RoomFloor;
+          if x == 0 && y == 0 {
+            self.tile_map[idx as usize] = Tile::TopLeWall;
+          } else if x == room.width() - 1 && y == 0 {
+            self.tile_map[idx as usize] = Tile::TopRiWall;
+          } else if x == 0 && y == room.height() - 1 {
+            self.tile_map[idx as usize] = Tile::BotLeWall;
+          } else if x == room.width() - 1 && y == room.height() - 1 {
+            self.tile_map[idx as usize] = Tile::BotRiWall;
+          } else if x == 0 || x == room.width() - 1 {
+            self.tile_map[idx as usize] = Tile::VertWall;
+          } else if y == 0 || y == room.height() - 1 {
+            self.tile_map[idx as usize] = Tile::HorWall;
+          } else {
+            self.tile_map[idx as usize] = Tile::FloorTile;
+          }
         }
       }
     }
@@ -173,10 +194,10 @@ impl Dungeon {
 
       if same_col(org as u8, dest as u8) {
         let ox = (room_org.x1 + room_org.x2) / 2;
-        let oy = room_org.y2;
+        let oy = room_org.y2 - 1;
 
         let dx = (room_dest.x1 + room_dest.x2) / 2;
-        let dy = room_dest.y1;
+        let dy = room_dest.y1 + 1;
 
         let py = (oy + dy) / 2;
 
@@ -185,10 +206,10 @@ impl Dungeon {
         else { self.dig_hor_line(dx, py, ox+1) }
         self.dig_vert_line(dx, py, dy);
       } else {
-        let ox = room_org.x2;
+        let ox = room_org.x2 - 1;
         let oy = (room_org.y1 + room_org.y2) / 2;
 
-        let dx = room_dest.x1;
+        let dx = room_dest.x1 + 1;
         let dy = (room_dest.y1 + room_dest.y2) / 2;
 
         let px = (ox + dx) / 2;
@@ -205,7 +226,7 @@ impl Dungeon {
     for y in 0..(dy - oy) {
       let map_y = y + oy;
       let idx = ox + MAP_WIDTH * map_y;
-      self.tile_map[idx as usize] = Tile::Corridor;
+      self.tile_map[idx as usize] = Tile::CorridorTile;
     }
   }
 
@@ -213,7 +234,7 @@ impl Dungeon {
     for x in 0..(dx - ox) {
       let map_x = x + ox;
       let idx = map_x + MAP_WIDTH * oy;
-      self.tile_map[idx as usize] = Tile::Corridor;
+      self.tile_map[idx as usize] = Tile::CorridorTile;
     }
   }
 }
