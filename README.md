@@ -1,6 +1,6 @@
 # Rust - GBA
 
-## 前提
+## requirements
 
 ```
 sudo apt install binutils-arm-none-eabi
@@ -9,7 +9,7 @@ rustup component add rust-src
 cargo install cargo-xbuild
 ```
 
-## ビルド
+## build
 
 ```
 arm-none-eabi-as crt0.s -o target/crt0.o
